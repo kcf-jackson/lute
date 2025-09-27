@@ -126,6 +126,12 @@ func NewVditorIRRenderer(tree *parse.Tree, options *Options) *VditorIRRenderer {
 	ret.RendererFuncs[ast.NodeKramdownBlockIAL] = ret.renderKramdownBlockIAL
 	ret.RendererFuncs[ast.NodeLinkRefDefBlock] = ret.renderLinkRefDefBlock
 	ret.RendererFuncs[ast.NodeLinkRefDef] = ret.renderLinkRefDef
+	ret.RendererFuncs[ast.NodeWikiLink] = ret.renderWikiLink
+	ret.RendererFuncs[ast.NodeWikiLinkOpenBracket] = ret.renderWikiLinkOpenBracket
+	ret.RendererFuncs[ast.NodeWikiLinkCloseBracket] = ret.renderWikiLinkCloseBracket
+	ret.RendererFuncs[ast.NodeWikiLinkTarget] = ret.renderWikiLinkTarget
+	ret.RendererFuncs[ast.NodeWikiLinkSeparator] = ret.renderWikiLinkSeparator
+	ret.RendererFuncs[ast.NodeWikiLinkText] = ret.renderWikiLinkText
 	return ret
 }
 
@@ -1527,4 +1533,58 @@ func (r *VditorIRRenderer) Text(node *ast.Node) (ret string) {
 		return ast.WalkContinue
 	})
 	return
+}
+
+func (r *VditorIRRenderer) renderWikiLink(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		r.renderSpanNode(node)
+	} else {
+		r.Tag("/span", nil, false)
+	}
+	return ast.WalkContinue
+}
+
+func (r *VditorIRRenderer) renderWikiLinkOpenBracket(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		r.Tag("span", [][]string{{"class", "vditor-ir__marker vditor-ir__marker--bracket"}}, false)
+		r.Write(node.Tokens)
+		r.Tag("/span", nil, false)
+	}
+	return ast.WalkContinue
+}
+
+func (r *VditorIRRenderer) renderWikiLinkCloseBracket(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		r.Tag("span", [][]string{{"class", "vditor-ir__marker vditor-ir__marker--bracket"}}, false)
+		r.Write(node.Tokens)
+		r.Tag("/span", nil, false)
+	}
+	return ast.WalkContinue
+}
+
+func (r *VditorIRRenderer) renderWikiLinkTarget(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		r.Tag("span", [][]string{{"class", "vditor-ir__link"}}, false)
+		r.Write(node.Tokens)
+		r.Tag("/span", nil, false)
+	}
+	return ast.WalkContinue
+}
+
+func (r *VditorIRRenderer) renderWikiLinkSeparator(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		r.Tag("span", [][]string{{"class", "vditor-ir__marker"}}, false)
+		r.Write(node.Tokens)
+		r.Tag("/span", nil, false)
+	}
+	return ast.WalkContinue
+}
+
+func (r *VditorIRRenderer) renderWikiLinkText(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		r.Tag("span", [][]string{{"class", "vditor-ir__link"}}, false)
+		r.Write(node.Tokens)
+		r.Tag("/span", nil, false)
+	}
+	return ast.WalkContinue
 }

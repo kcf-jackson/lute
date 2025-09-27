@@ -164,6 +164,12 @@ func NewVditorSVRenderer(tree *parse.Tree, options *Options) *VditorSVRenderer {
 	ret.RendererFuncs[ast.NodeKramdownBlockIAL] = ret.renderKramdownBlockIAL
 	ret.RendererFuncs[ast.NodeLinkRefDefBlock] = ret.renderLinkRefDefBlock
 	ret.RendererFuncs[ast.NodeLinkRefDef] = ret.renderLinkRefDef
+	ret.RendererFuncs[ast.NodeWikiLink] = ret.renderWikiLink
+	ret.RendererFuncs[ast.NodeWikiLinkOpenBracket] = ret.renderWikiLinkOpenBracket
+	ret.RendererFuncs[ast.NodeWikiLinkCloseBracket] = ret.renderWikiLinkCloseBracket
+	ret.RendererFuncs[ast.NodeWikiLinkTarget] = ret.renderWikiLinkTarget
+	ret.RendererFuncs[ast.NodeWikiLinkSeparator] = ret.renderWikiLinkSeparator
+	ret.RendererFuncs[ast.NodeWikiLinkText] = ret.renderWikiLinkText
 	return ret
 }
 
@@ -1291,4 +1297,43 @@ func (r *VditorSVRenderer) Text(node *ast.Node) (ret string) {
 		return ast.WalkContinue
 	})
 	return
+}
+
+func (r *VditorSVRenderer) renderWikiLink(node *ast.Node, entering bool) ast.WalkStatus {
+	return ast.WalkContinue
+}
+
+func (r *VditorSVRenderer) renderWikiLinkOpenBracket(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		r.Write(node.Tokens)
+	}
+	return ast.WalkContinue
+}
+
+func (r *VditorSVRenderer) renderWikiLinkCloseBracket(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		r.Write(node.Tokens)
+	}
+	return ast.WalkContinue
+}
+
+func (r *VditorSVRenderer) renderWikiLinkTarget(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		r.Write(node.Tokens)
+	}
+	return ast.WalkContinue
+}
+
+func (r *VditorSVRenderer) renderWikiLinkSeparator(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		r.Write(node.Tokens)
+	}
+	return ast.WalkContinue
+}
+
+func (r *VditorSVRenderer) renderWikiLinkText(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		r.Write(node.Tokens)
+	}
+	return ast.WalkContinue
 }

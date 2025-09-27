@@ -129,6 +129,12 @@ func NewVditorRenderer(tree *parse.Tree, options *Options) *VditorRenderer {
 	ret.RendererFuncs[ast.NodeKramdownBlockIAL] = ret.renderKramdownBlockIAL
 	ret.RendererFuncs[ast.NodeLinkRefDefBlock] = ret.renderLinkRefDefBlock
 	ret.RendererFuncs[ast.NodeLinkRefDef] = ret.renderLinkRefDef
+	ret.RendererFuncs[ast.NodeWikiLink] = ret.renderWikiLink
+	ret.RendererFuncs[ast.NodeWikiLinkOpenBracket] = ret.renderWikiLinkOpenBracket
+	ret.RendererFuncs[ast.NodeWikiLinkCloseBracket] = ret.renderWikiLinkCloseBracket
+	ret.RendererFuncs[ast.NodeWikiLinkTarget] = ret.renderWikiLinkTarget
+	ret.RendererFuncs[ast.NodeWikiLinkSeparator] = ret.renderWikiLinkSeparator
+	ret.RendererFuncs[ast.NodeWikiLinkText] = ret.renderWikiLinkText
 	return ret
 }
 
@@ -1222,5 +1228,55 @@ func (r *VditorRenderer) renderCodeBlockCode(node *ast.Node, entering bool) ast.
 			r.WriteString("</code></pre>")
 		}
 	}
+	return ast.WalkContinue
+}
+
+func (r *VditorRenderer) renderWikiLink(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		targetNode := node.ChildByType(ast.NodeWikiLinkTarget)
+		if nil == targetNode {
+			return ast.WalkContinue
+		}
+		
+		target := util.BytesToStr(targetNode.Tokens)
+		
+		// Get the display text
+		var displayText string
+		if textNode := node.ChildByType(ast.NodeWikiLinkText); nil != textNode && len(textNode.Tokens) > 0 {
+			displayText = util.BytesToStr(textNode.Tokens)
+		} else {
+			// Use target as display text if no alternative text provided
+			displayText = target
+		}
+		
+		attrs := [][]string{
+			{"href", target},
+			{"class", "wiki-link"},
+		}
+		
+		r.Tag("a", attrs, false)
+		r.WriteString(html.EscapeHTMLStr(displayText))
+		r.Tag("/a", nil, false)
+	}
+	return ast.WalkSkipChildren
+}
+
+func (r *VditorRenderer) renderWikiLinkOpenBracket(node *ast.Node, entering bool) ast.WalkStatus {
+	return ast.WalkContinue
+}
+
+func (r *VditorRenderer) renderWikiLinkCloseBracket(node *ast.Node, entering bool) ast.WalkStatus {
+	return ast.WalkContinue
+}
+
+func (r *VditorRenderer) renderWikiLinkTarget(node *ast.Node, entering bool) ast.WalkStatus {
+	return ast.WalkContinue
+}
+
+func (r *VditorRenderer) renderWikiLinkSeparator(node *ast.Node, entering bool) ast.WalkStatus {
+	return ast.WalkContinue
+}
+
+func (r *VditorRenderer) renderWikiLinkText(node *ast.Node, entering bool) ast.WalkStatus {
 	return ast.WalkContinue
 }
