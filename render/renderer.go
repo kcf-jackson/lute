@@ -12,6 +12,7 @@ package render
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -197,6 +198,15 @@ func (r *BaseRenderer) Render() (output []byte) {
 
 		render := r.RendererFuncs[n.Type]
 		if nil == render {
+			// Debug: Print renderer type and registered functions for wiki link nodes
+			if n.Type >= ast.NodeWikiLink && n.Type <= ast.NodeWikiLinkText {
+				rendererType := fmt.Sprintf("%T", r)
+				r.WriteString(fmt.Sprintf("DEBUG: Missing render function in %s for %s. ", rendererType, n.Type.String()))
+				r.WriteString(fmt.Sprintf("Registered functions: %d total. ", len(r.RendererFuncs)))
+				hasWikiLink := r.RendererFuncs[ast.NodeWikiLink] != nil
+				r.WriteString(fmt.Sprintf("Has NodeWikiLink: %t. ", hasWikiLink))
+			}
+			
 			if nil != r.DefaultRendererFunc {
 				return r.DefaultRendererFunc(n, entering)
 			}
@@ -210,7 +220,10 @@ func (r *BaseRenderer) Render() (output []byte) {
 }
 
 func (r *BaseRenderer) renderDefault(n *ast.Node, entering bool) ast.WalkStatus {
-	r.WriteString("not found render function for node [type=" + n.Type.String() + ", Tokens=" + util.BytesToStr(n.Tokens) + "]")
+	// Add debugging information to help identify the renderer type
+	rendererType := fmt.Sprintf("%T", r)
+	r.WriteString(fmt.Sprintf("not found render function for node [type=%s, Tokens=%s] in renderer [%s] entering=%t", 
+		n.Type.String(), util.BytesToStr(n.Tokens), rendererType, entering))
 	return ast.WalkContinue
 }
 
