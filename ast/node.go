@@ -1147,5 +1147,14 @@ const (
 	NodeHTMLTagOpen  NodeType = 571 // 开始 HTML 标签
 	NodeHTMLTagClose NodeType = 572 // 结束 HTML 标签
 
+	// Wiki 链接 [[file_name#section|alternative text]]
+
+	NodeWikiLink                 NodeType = 580 // Wiki 链接
+	NodeWikiLinkOpenBracket      NodeType = 581 // Wiki 链接开始标记符 [[
+	NodeWikiLinkCloseBracket     NodeType = 582 // Wiki 链接结束标记符 ]]
+	NodeWikiLinkTarget           NodeType = 583 // Wiki 链接目标 file_name#section
+	NodeWikiLinkSeparator        NodeType = 584 // Wiki 链接分隔符 |
+	NodeWikiLinkText             NodeType = 585 // Wiki 链接显示文本
+
 	NodeTypeMaxVal NodeType = 1024 // 节点类型最大值
 )

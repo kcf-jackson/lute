@@ -166,6 +166,12 @@ func NewHtmlRenderer(tree *parse.Tree, options *Options) *HtmlRenderer {
 	ret.RendererFuncs[ast.NodeTextMark] = ret.renderTextMark
 	ret.RendererFuncs[ast.NodeAttributeView] = ret.renderAttributeView
 	ret.RendererFuncs[ast.NodeCustomBlock] = ret.renderCustomBlock
+	ret.RendererFuncs[ast.NodeWikiLink] = ret.renderWikiLink
+	ret.RendererFuncs[ast.NodeWikiLinkOpenBracket] = ret.renderWikiLinkOpenBracket
+	ret.RendererFuncs[ast.NodeWikiLinkCloseBracket] = ret.renderWikiLinkCloseBracket
+	ret.RendererFuncs[ast.NodeWikiLinkTarget] = ret.renderWikiLinkTarget
+	ret.RendererFuncs[ast.NodeWikiLinkSeparator] = ret.renderWikiLinkSeparator
+	ret.RendererFuncs[ast.NodeWikiLinkText] = ret.renderWikiLinkText
 	return ret
 }
 
@@ -1432,6 +1438,56 @@ func (r *HtmlRenderer) renderTextMarkAttrs(node *ast.Node) (attrs [][]string) {
 		}
 	}
 	return
+}
+
+func (r *HtmlRenderer) renderWikiLink(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		targetNode := node.ChildByType(ast.NodeWikiLinkTarget)
+		if nil == targetNode {
+			return ast.WalkContinue
+		}
+		
+		target := util.BytesToStr(targetNode.Tokens)
+		
+		// Get the display text
+		var displayText string
+		if textNode := node.ChildByType(ast.NodeWikiLinkText); nil != textNode && len(textNode.Tokens) > 0 {
+			displayText = util.BytesToStr(textNode.Tokens)
+		} else {
+			// Use target as display text if no alternative text provided
+			displayText = target
+		}
+		
+		attrs := [][]string{
+			{"href", target},
+			{"class", "wiki-link"},
+		}
+		
+		r.Tag("a", attrs, false)
+		r.WriteString(html.EscapeHTMLStr(displayText))
+		r.Tag("/a", nil, false)
+	}
+	return ast.WalkSkipChildren
+}
+
+func (r *HtmlRenderer) renderWikiLinkOpenBracket(node *ast.Node, entering bool) ast.WalkStatus {
+	return ast.WalkContinue
+}
+
+func (r *HtmlRenderer) renderWikiLinkCloseBracket(node *ast.Node, entering bool) ast.WalkStatus {
+	return ast.WalkContinue
+}
+
+func (r *HtmlRenderer) renderWikiLinkTarget(node *ast.Node, entering bool) ast.WalkStatus {
+	return ast.WalkContinue
+}
+
+func (r *HtmlRenderer) renderWikiLinkSeparator(node *ast.Node, entering bool) ast.WalkStatus {
+	return ast.WalkContinue
+}
+
+func (r *HtmlRenderer) renderWikiLinkText(node *ast.Node, entering bool) ast.WalkStatus {
+	return ast.WalkContinue
 }
 
 func (r *HtmlRenderer) spanNodeAttrs(node *ast.Node, attrs *[][]string) {

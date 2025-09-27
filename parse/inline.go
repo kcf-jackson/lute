@@ -54,7 +54,9 @@ func (t *Tree) parseInline(block *ast.Node, ctx *InlineContext) {
 				}
 			}
 		case lex.ItemOpenBracket:
-			n = t.parseOpenBracket(ctx)
+			if n = t.parseWikiLink(ctx); nil == n {
+				n = t.parseOpenBracket(ctx)
+			}
 		case lex.ItemCloseBracket:
 			n = t.parseCloseBracket(ctx)
 		case lex.ItemAmpersand:
@@ -387,6 +389,15 @@ func (t *Tree) parseCloseBracket(ctx *InlineContext) *ast.Node {
 
 func (t *Tree) parseOpenBracket(ctx *InlineContext) (ret *ast.Node) {
 	startPos := ctx.pos
+	
+	// Check for wiki link [[ ]]
+	if ctx.pos+1 < ctx.tokensLen && lex.ItemOpenBracket == ctx.tokens[ctx.pos+1] {
+		// This might be a wiki link, try to parse it
+		if n := t.parseWikiLink(ctx); nil != n {
+			return n
+		}
+	}
+	
 	ctx.pos++
 	ret = &ast.Node{Type: ast.NodeText, Tokens: ctx.tokens[startPos:ctx.pos]}
 	// 将 [ 入栈
@@ -411,4 +422,89 @@ func (t *Tree) addBracket(node *ast.Node, index int, image bool, ctx *InlineCont
 
 func (t *Tree) removeBracket(ctx *InlineContext) {
 	ctx.brackets = ctx.brackets.previous
+}
+
+func (t *Tree) parseWikiLink(ctx *InlineContext) (ret *ast.Node) {
+	if ctx.pos+1 >= ctx.tokensLen || lex.ItemOpenBracket != ctx.tokens[ctx.pos+1] {
+		return nil
+	}
+	
+	startPos := ctx.pos
+	ctx.pos += 2 // skip [[ 
+	
+	// Look for the closing ]]
+	var targetEnd, separatorPos, textStart, textEnd, closingPos int = -1, -1, -1, -1, -1
+	
+	for i := ctx.pos; i < ctx.tokensLen-1; i++ {
+		if lex.ItemCloseBracket == ctx.tokens[i] && lex.ItemCloseBracket == ctx.tokens[i+1] {
+			// Found closing ]]
+			closingPos = i
+			if -1 == separatorPos {
+				// No separator found, the whole content is the target
+				targetEnd = i
+			} else {
+				// Separator found, content after separator is the text
+				textEnd = i
+			}
+			break
+		} else if lex.ItemPipe == ctx.tokens[i] && -1 == separatorPos {
+			// Found separator |
+			targetEnd = i
+			separatorPos = i
+			textStart = i + 1
+		}
+	}
+	
+	if -1 == closingPos {
+		// No closing ]] found, not a wiki link
+		ctx.pos = startPos
+		return nil
+	}
+	
+	// Extract target
+	var target []byte
+	if targetEnd > ctx.pos {
+		target = ctx.tokens[ctx.pos:targetEnd]
+	} else {
+		// Empty target, not a valid wiki link
+		ctx.pos = startPos
+		return nil
+	}
+	
+	// Extract text (if any)
+	var text []byte
+	if -1 != separatorPos && textEnd > textStart {
+		text = ctx.tokens[textStart:textEnd]
+	}
+	
+	// Create wiki link node
+	ret = &ast.Node{Type: ast.NodeWikiLink}
+	
+	// Add opening bracket tokens [[
+	openBracket := &ast.Node{Type: ast.NodeWikiLinkOpenBracket, Tokens: []byte("[[")}
+	ret.AppendChild(openBracket)
+	
+	// Add target
+	targetNode := &ast.Node{Type: ast.NodeWikiLinkTarget, Tokens: target}
+	ret.AppendChild(targetNode)
+	
+	// Add separator and text if present
+	if -1 != separatorPos {
+		separator := &ast.Node{Type: ast.NodeWikiLinkSeparator, Tokens: []byte("|")}
+		ret.AppendChild(separator)
+		
+		if len(text) > 0 {
+			textNode := &ast.Node{Type: ast.NodeWikiLinkText, Tokens: text}
+			ret.AppendChild(textNode)
+		}
+	}
+	
+	// Add closing bracket tokens ]]
+	closeBracket := &ast.Node{Type: ast.NodeWikiLinkCloseBracket, Tokens: []byte("]]")}
+	ret.AppendChild(closeBracket)
+	
+	// Move position past the closing ]]
+	ctx.pos = closingPos + 2
+	
+	return ret
 }

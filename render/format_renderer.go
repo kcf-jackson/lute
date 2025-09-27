@@ -170,6 +170,12 @@ func NewFormatRenderer(tree *parse.Tree, options *Options) *FormatRenderer {
 	ret.RendererFuncs[ast.NodeHTMLTag] = ret.renderHTMLTag
 	ret.RendererFuncs[ast.NodeHTMLTagOpen] = ret.renderHTMLTagOpen
 	ret.RendererFuncs[ast.NodeHTMLTagClose] = ret.renderHTMLTagClose
+	ret.RendererFuncs[ast.NodeWikiLink] = ret.renderWikiLink
+	ret.RendererFuncs[ast.NodeWikiLinkOpenBracket] = ret.renderWikiLinkOpenBracket
+	ret.RendererFuncs[ast.NodeWikiLinkCloseBracket] = ret.renderWikiLinkCloseBracket
+	ret.RendererFuncs[ast.NodeWikiLinkTarget] = ret.renderWikiLinkTarget
+	ret.RendererFuncs[ast.NodeWikiLinkSeparator] = ret.renderWikiLinkSeparator
+	ret.RendererFuncs[ast.NodeWikiLinkText] = ret.renderWikiLinkText
 	return ret
 }
 
@@ -1825,6 +1831,45 @@ func (r *FormatRenderer) renderSoftBreak(node *ast.Node, entering bool) ast.Walk
 
 func (r *FormatRenderer) withoutKramdownBlockIAL(node *ast.Node) bool {
 	return !r.Options.KramdownBlockIAL || 0 == len(node.KramdownIAL) || nil == node.Next || ast.NodeKramdownBlockIAL != node.Next.Type
+}
+
+func (r *FormatRenderer) renderWikiLink(node *ast.Node, entering bool) ast.WalkStatus {
+	return ast.WalkContinue
+}
+
+func (r *FormatRenderer) renderWikiLinkOpenBracket(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		r.Write(node.Tokens)
+	}
+	return ast.WalkContinue
+}
+
+func (r *FormatRenderer) renderWikiLinkCloseBracket(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		r.Write(node.Tokens)
+	}
+	return ast.WalkContinue
+}
+
+func (r *FormatRenderer) renderWikiLinkTarget(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		r.Write(node.Tokens)
+	}
+	return ast.WalkContinue
+}
+
+func (r *FormatRenderer) renderWikiLinkSeparator(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		r.Write(node.Tokens)
+	}
+	return ast.WalkContinue
+}
+
+func (r *FormatRenderer) renderWikiLinkText(node *ast.Node, entering bool) ast.WalkStatus {
+	if entering {
+		r.Write(node.Tokens)
+	}
+	return ast.WalkContinue
 }
 
 func (r *FormatRenderer) newlineBeforeBlock(node *ast.Node) {
