@@ -23,6 +23,6 @@ gvm use go1.17.13 --default
 go install github.com/gopherjs/gopherjs@v1.17.2
 
 # # Build lute.min.js
-# cd /workspace/lute/javascript/
+# cd /workspaces/lute/javascript/
 # export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
 #   gopherjs build --tags javascript -o lute.min.js -m
