@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vditor Wiki-Link Test</title>
+    <link rel="stylesheet" type="text/css" href="index.css" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-info {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196F3;
+        }
+        #vditor {
+            height: 500px;
+        }
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 5px;
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vditor Wiki-Link Extension Test</h1>
+
+        <div class="test-info">
+            <h3>Testing Wiki-Link Support</h3>
+            <p>This page tests the wiki-link extension in the rebuilt vditor with enhanced lute.min.js</p>
+            <p><strong>Version:</strong> vditor 3.11.2 with custom lute wiki-link support</p>
+        </div>
+
+        <div id="vditor"></div>
+
+        <div class="instructions">
+            <h4>How to test wiki-links:</h4>
+            <ul>
+                <li>Try typing: <code>[[Sample Link]]</code></li>
+                <li>Try typing: <code>[[Another Page|Display Text]]</code></li>
+                <li>Try typing: <code>[[Category:Examples]]</code></li>
+                <li>Switch between edit and preview modes to see the rendered output</li>
+                <li>Check the browser console for any errors</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="index.min.js"></script>
+    <script>
+        console.log('Initializing Vditor with wiki-link support...');
+
+        const vditor = new Vditor('vditor', {
+            height: 500,
+            mode: 'wysiwyg',
+            placeholder: 'Type some wiki-links like [[Page Name]] or [[Link|Display Text]] to test the extension...',
+            theme: 'classic',
+            // cdn: '', // Use local files instead of CDN
+            _lutePath: 'lute.min.js', // Explicitly point to our updated lute.min.js
+            preview: {
+                theme: {
+                    current: 'light'
+                }
+            },
+            value: `# Wiki-Link Test Document
+
+Welcome to the wiki-link test! Try these examples:
+
+## Basic Wiki-Links
+- [[Home Page]]
+- [[User Guide]]
+- [[Installation Instructions]]
+
+## Wiki-Links with Display Text
+- [[Home Page|Go to Home]]
+- [[User:John Doe|John's Profile]]
+- [[Help:Getting Started|Getting Started Guide]]
+
+## Category Links
+- [[Category:Documentation]]
+- [[Category:Examples]]
+
+## Test Your Own
+Type your own wiki-links below:
+
+`,
+            after: () => {
+                console.log('Vditor initialized successfully!');
+                console.log('Lute version:', window.Lute ? 'Available' : 'Not found');
+
+                // Add some debugging info
+                setTimeout(() => {
+                    const content = vditor.getValue();
+                    console.log('Current content:', content);
+
+                    // Try to get preview HTML to see if wiki-links are being processed
+                    const previewHTML = vditor.getHTML();
+                    console.log('Preview HTML:', previewHTML);
+                }, 1000);
+            },
+            input: (value) => {
+                // Log changes to help debug wiki-link processing
+                if (value.includes('[[') && value.includes(']]')) {
+                    console.log('Wiki-link detected in input:', value);
+                }
+            }
+        });
+
+        // Add some debugging functions to window for manual testing
+        window.testVditor = {
+            getValue: () => vditor.getValue(),
+            getHTML: () => vditor.getHTML(),
+            setValue: (content) => vditor.setValue(content),
+            insertValue: (content) => vditor.insertValue(content)
+        };
+
+        console.log('Test functions available: window.testVditor');
+    </script>
+</body>
+</html>
