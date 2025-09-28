@@ -13,7 +13,7 @@ env:
   # >>>> EDIT THESE <<<<
   UPSTREAM: 88250/lute   # e.g. pytorch/pytorch
   DEFAULT_BRANCH: master                   # your fork's default branch name
-  FEATURE_BRANCHES: '["wiki-link"]'  # JSON list of branches to keep updated
+  # See matrix.branch in the jobs for the list of branches to keep updated
 
 jobs:
   sync-master:
@@ -64,7 +64,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        branch: ${{ fromJson(env.FEATURE_BRANCHES) }}
+        branch: ["wiki-link"]
     steps:
       - uses: actions/checkout@v4
         with:
