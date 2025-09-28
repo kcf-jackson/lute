@@ -1391,11 +1391,20 @@ func (lute *Lute) genASTByVditorDOM(n *html.Node, tree *parse.Tree) {
 			}
 		}
 
-		node.Type = ast.NodeLink
-		node.AppendChild(&ast.Node{Type: ast.NodeOpenBracket})
-		tree.Context.Tip.AppendChild(node)
-		tree.Context.Tip = node
-		defer tree.Context.ParentTip()
+		// Check if this is a wiki-link by looking for class="wiki-link"
+		if "wiki-link" == util.DomAttrValue(n, "class") {
+			node.Type = ast.NodeWikiLink
+			node.AppendChild(&ast.Node{Type: ast.NodeWikiLinkOpenBracket})
+			tree.Context.Tip.AppendChild(node)
+			tree.Context.Tip = node
+			defer tree.Context.ParentTip()
+		} else {
+			node.Type = ast.NodeLink
+			node.AppendChild(&ast.Node{Type: ast.NodeOpenBracket})
+			tree.Context.Tip.AppendChild(node)
+			tree.Context.Tip = node
+			defer tree.Context.ParentTip()
+		}
 	case atom.Img:
 		imgClass := class
 		imgAlt := util.DomAttrValue(n, "alt")
@@ -1749,22 +1758,44 @@ func (lute *Lute) genASTByVditorDOM(n *html.Node, tree *parse.Tree) {
 			node.AppendChild(&ast.Node{Type: ast.NodeStrongA6kCloseMarker, Tokens: []byte(marker)})
 		}
 	case atom.A:
-		node.AppendChild(&ast.Node{Type: ast.NodeCloseBracket})
-		node.AppendChild(&ast.Node{Type: ast.NodeOpenParen})
-		href := util.DomAttrValue(n, "href")
-		if "" != lute.RenderOptions.LinkBase {
-			href = strings.ReplaceAll(href, lute.RenderOptions.LinkBase, "")
+		// Check if this is a wiki-link by looking for class="wiki-link"
+		if "wiki-link" == util.DomAttrValue(n, "class") {
+			node.AppendChild(&ast.Node{Type: ast.NodeWikiLinkCloseBracket})
+			
+			// Add the target
+			href := util.DomAttrValue(n, "href")
+			if "" != lute.RenderOptions.LinkBase {
+				href = strings.ReplaceAll(href, lute.RenderOptions.LinkBase, "")
+			}
+			if "" != lute.RenderOptions.LinkPrefix {
+				href = strings.ReplaceAll(href, lute.RenderOptions.LinkPrefix, "")
+			}
+			node.AppendChild(&ast.Node{Type: ast.NodeWikiLinkTarget, Tokens: []byte(href)})
+			
+			// Check if we need to add display text (different from target)
+			linkText := util.DomText(n)
+			if linkText != href && linkText != "" {
+				node.AppendChild(&ast.Node{Type: ast.NodeWikiLinkSeparator, Tokens: []byte("|")})
+				node.AppendChild(&ast.Node{Type: ast.NodeWikiLinkText, Tokens: []byte(linkText)})
+			}
+		} else {
+			node.AppendChild(&ast.Node{Type: ast.NodeCloseBracket})
+			node.AppendChild(&ast.Node{Type: ast.NodeOpenParen})
+			href := util.DomAttrValue(n, "href")
+			if "" != lute.RenderOptions.LinkBase {
+				href = strings.ReplaceAll(href, lute.RenderOptions.LinkBase, "")
+			}
+			if "" != lute.RenderOptions.LinkPrefix {
+				href = strings.ReplaceAll(href, lute.RenderOptions.LinkPrefix, "")
+			}
+			node.AppendChild(&ast.Node{Type: ast.NodeLinkDest, Tokens: []byte(href)})
+			linkTitle := util.DomAttrValue(n, "title")
+			if "" != linkTitle {
+				node.AppendChild(&ast.Node{Type: ast.NodeLinkSpace})
+				node.AppendChild(&ast.Node{Type: ast.NodeLinkTitle, Tokens: []byte(linkTitle)})
+			}
+			node.AppendChild(&ast.Node{Type: ast.NodeCloseParen})
 		}
-		if "" != lute.RenderOptions.LinkPrefix {
-			href = strings.ReplaceAll(href, lute.RenderOptions.LinkPrefix, "")
-		}
-		node.AppendChild(&ast.Node{Type: ast.NodeLinkDest, Tokens: []byte(href)})
-		linkTitle := util.DomAttrValue(n, "title")
-		if "" != linkTitle {
-			node.AppendChild(&ast.Node{Type: ast.NodeLinkSpace})
-			node.AppendChild(&ast.Node{Type: ast.NodeLinkTitle, Tokens: []byte(linkTitle)})
-		}
-		node.AppendChild(&ast.Node{Type: ast.NodeCloseParen})
 	case atom.Del, atom.S, atom.Strike:
 		marker := util.DomAttrValue(n, "data-marker")
 		if "~" == marker {
