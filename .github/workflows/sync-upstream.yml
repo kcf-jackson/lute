@@ -1,0 +1,106 @@
+name: Sync fork & update feature branches
+
+on:
+  schedule:
+    - cron: "17 3 * * *"   # runs daily at 03:17 UTC
+  workflow_dispatch:        # manual run button
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  # >>>> EDIT THESE <<<<
+  UPSTREAM: 88250/lute   # e.g. pytorch/pytorch
+  DEFAULT_BRANCH: master                   # your fork's default branch name
+  FEATURE_BRANCHES: '["wiki-link"]'  # JSON list of branches to keep updated
+
+jobs:
+  sync-master:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream and fetch
+        run: |
+          git remote add upstream https://github.com/${{ env.UPSTREAM }}.git
+          git fetch upstream
+
+      - name: Ensure local default branch exists
+        run: |
+          git checkout ${{ env.DEFAULT_BRANCH }}
+
+      - name: Try fast-forward from upstream
+        id: ff
+        run: |
+          set +e
+          git merge --ff-only upstream/${{ env.DEFAULT_BRANCH }}
+          rc=$?
+          set -e
+          echo "rc=$rc" >> $GITHUB_OUTPUT
+
+      - name: Push fast-forwarded branch
+        if: steps.ff.outputs.rc == '0'
+        run: git push origin ${{ env.DEFAULT_BRANCH }}
+
+      - name: Open PR if fast-forward not possible
+        if: steps.ff.outputs.rc != '0'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore: sync from upstream/${{ env.DEFAULT_BRANCH }}"
+          title: "Sync: Update from upstream/${{ env.DEFAULT_BRANCH }}"
+          body: "Automated sync from upstream. Review and merge to update `${{ env.DEFAULT_BRANCH }}`."
+          branch: upstream-sync/${{ env.DEFAULT_BRANCH }}
+          base: ${{ env.DEFAULT_BRANCH }}
+
+  update-features:
+    needs: sync-master
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: ${{ fromJson(env.FEATURE_BRANCHES) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch origin default branch
+        run: |
+          git fetch origin ${{ env.DEFAULT_BRANCH }}:${{ env.DEFAULT_BRANCH }}
+
+      - name: Try fast-forward feature branch from default branch
+        id: ffff
+        run: |
+          set +e
+          # Merge *into* feature branch, ff-only (safe, no merge commits)
+          git merge --ff-only origin/${{ env.DEFAULT_BRANCH }}
+          rc=$?
+          set -e
+          echo "rc=$rc" >> $GITHUB_OUTPUT
+
+      - name: Push fast-forwarded feature branch
+        if: steps.ffff.outputs.rc == '0'
+        run: git push origin ${{ matrix.branch }}
+
+      - name: Open PR if fast-forward not possible
+        if: steps.ffff.outputs.rc != '0'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore: sync ${matrix.branch} from ${{ env.DEFAULT_BRANCH }}"
+          title: "Sync: Merge `${{ env.DEFAULT_BRANCH }}` into `${{ matrix.branch }}`"
+          body: |
+            Automated PR to bring `${{ matrix.branch }}` up to date with `${{ env.DEFAULT_BRANCH }}`.
+            Fast-forward was not possible (diverged history), so review & merge.
+          branch: sync-to/${{ matrix.branch }}
+          base: ${{ matrix.branch }}
