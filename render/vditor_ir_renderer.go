@@ -1522,7 +1522,7 @@ func (r *VditorIRRenderer) Text(node *ast.Node) (ret string) {
 	ast.Walk(node, func(n *ast.Node, entering bool) ast.WalkStatus {
 		if entering {
 			switch n.Type {
-			case ast.NodeText, ast.NodeLinkText, ast.NodeLinkDest, ast.NodeLinkTitle, ast.NodeCodeBlockCode, ast.NodeCodeSpanContent, ast.NodeInlineMathContent, ast.NodeMathBlockContent, ast.NodeYamlFrontMatterContent, ast.NodeHTMLBlock, ast.NodeInlineHTML, ast.NodeEmojiAlias:
+			case ast.NodeText, ast.NodeLinkText, ast.NodeLinkDest, ast.NodeLinkTitle, ast.NodeCodeBlockCode, ast.NodeCodeSpanContent, ast.NodeInlineMathContent, ast.NodeMathBlockContent, ast.NodeYamlFrontMatterContent, ast.NodeHTMLBlock, ast.NodeInlineHTML, ast.NodeEmojiAlias, ast.NodeWikiLinkTarget, ast.NodeWikiLinkText:
 				ret += string(n.Tokens)
 			case ast.NodeCodeBlockFenceInfoMarker:
 				ret += string(n.CodeBlockInfo)
