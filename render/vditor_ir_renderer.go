@@ -1462,6 +1462,8 @@ func (r *VditorIRRenderer) renderSpanNode(node *ast.Node) {
 		attrs = append(attrs, []string{"data-type", "html-entity"})
 	case ast.NodeBackslash:
 		attrs = append(attrs, []string{"data-type", "backslash"})
+	case ast.NodeWikiLink:
+		attrs = append(attrs, []string{"data-type", "wiki-link"})
 	default:
 		attrs = append(attrs, []string{"data-type", "inline-node"})
 	}

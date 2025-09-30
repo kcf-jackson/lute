@@ -653,6 +653,18 @@ func (lute *Lute) genASTByVditorIRDOM(n *html.Node, tree *parse.Tree) {
 			node.Tokens = []byte(util.DomText(n))
 			tree.Context.Tip.AppendChild(node)
 			return
+		case "wiki-link":
+			// This is a wiki link span, need to reconstruct the wiki link AST structure
+			node.Type = ast.NodeWikiLink
+			tree.Context.Tip.AppendChild(node)
+			tree.Context.Tip = node
+			defer tree.Context.ParentTip()
+			
+			// Process children to reconstruct wiki link structure
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				lute.genASTByVditorIRDOM(c, tree)
+			}
+			return
 		case "math-block-close-marker":
 			tree.Context.Tip.AppendChild(&ast.Node{Type: ast.NodeMathBlockCloseMarker, Tokens: parse.MathBlockMarker})
 			defer tree.Context.ParentTip()
